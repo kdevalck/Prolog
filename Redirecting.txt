@@ -1,0 +1,98 @@
+commit ed9f9c3ca6d4e264bced1a8253524a8880b40eba
+Date:   Sat Sep 12 19:38:24 2009 +0200
+
+Questions? Comments? Contact: triska@logic.at
+
+Question: I am trying to find a path between two vertices in a graph,
+          and my program runs into an infinite loop. What can I do?
+======================================================================
+
+Let us consider a concrete example. Suppose your graph has 4 nodes and
+the following edges between them:
+
+   edge_from_to(a, b).
+   edge_from_to(b, a).
+   edge_from_to(b, c).
+   edge_from_to(c, d).
+
+To define when there exists a path between two nodes, you probably
+came up with code like:
+
+   path_from_to(A, B) :- edge_from_to(A, B).
+   path_from_to(A, B) :-
+           edge_from_to(A, Next),
+           path_from_to(Next, B).
+
+This predicate is certainly sound: IF there is an edge from A to B,
+THEN there is a path from A to B, and IF there is an edge from A to
+Next AND a path from Next to B, THEN there is also a path from A to B.
+The most general query:
+
+   ?- path_from_to(A, B).
+
+will therefore only yield correct solutions. Since the program is also
+monotonic, every more specific query (and thus all queries) of this
+predicate will only yield correct solutions as well.
+
+Unfortunately, the program is incomplete: It does not find all
+solutions - for example, the query:
+
+   ?- path_from_to(a, d).
+
+does not succeed. It also does not fail, it simply does not terminate.
+This is a consequence of Prolog's incomplete search strategy.
+
+A simple solution is to use tabling, if your Prolog system supports
+it. A different solution is to first specify a more general predicate,
+path_from_to_without/3. We want path_from_to_without(A, B, Ws) to hold
+if and only if there is a path from A to B that does not contain any
+elements of the list Ws as intermediate nodes:
+
+   path_from_to_without(A, B, _)  :- edge_from_to(A, B).
+   path_from_to_without(A, B, Ws) :-
+           edge_from_to(A, Next),
+           list_does_not_contain(Ws, Next),
+           path_from_to_without(Next, B, [A|Ws]).
+
+   list_does_not_contain([], _).
+   list_does_not_contain([L|Ls], E) :-
+           dif(L, E),
+           list_does_not_contain(Ls, E).
+
+Let us read path_from_to_without/3 declaratively: IF there is an edge
+from A to B, THEN there is a path from A to B. Since such a path does
+not involve any intermediate nodes, the third argument can be
+anything. The second clause: IF there is an edge from A to Next, AND
+Next is not an element of Ws, AND there is a path from Next to B that
+does not contain any element of Ws nor A as intermediate nodes, THEN
+there is a path from A to B that does not contain any elements of Ws
+as intermediate nodes. It is clear that we can require the path from
+Next to B to not involve A, since if there is a path from A to B in
+which A occurs as an intermediate node, there is also one without it.
+
+To answer the most general previous question ("Which paths exist?"),
+you can specify the empty list as forbidden intermediate nodes:
+
+   ?- path_from_to_without(A, B, []).
+
+In particular, the following query now succeeds as intended:
+
+   ?- path_from_to_without(a, d, []).
+   true .
+
+Operationally, if you consider only one direction, you could think of
+the program's behaviour as "remembering the visited nodes and not
+visiting them again". However, this does not do it justice, since the
+program can also answer more general queries, such as:
+
+   ?- path_from_to_without(a, d, [I]).
+   dif(I, c),
+   dif(I, b) .
+
+This asks: Is there a path from a to d without intermediate node I?
+And the answer is: Yes, if (and only if) I is neither c nor b.
+
+For an asymptotically more efficient solution, consider using an
+association list to store visited nodes. If (still) necessary,
+consider using attributed variables to mark visited nodes. These
+faster solutions will typically be less general.
