@@ -6,4 +6,5 @@
 :-['city.pl'].
 :-['shortestPath.pl'].
 :-['customers.pl'].
+:-['taxi.pl'].
 

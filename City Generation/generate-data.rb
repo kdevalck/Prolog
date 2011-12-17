@@ -177,7 +177,7 @@ class Grid
   end
 end
 
-options = {:width => 25, :height => 25, :max_distance => 10, :max_taxis => 125, :max_customers => 250}
+options = {:width => 26, :height => 26, :max_distance => 10, :max_taxis => 125, :max_customers => 250}
 optparse = OptionParser.new do |opts|
    # Set a banner, displayed at the top
    # of the help screen.
