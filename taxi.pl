@@ -22,41 +22,49 @@ parkingLot(PID) :-
 % Path = Path to follow to deliver customers
 % CurrN = The current node where the taxi is situated at the moment
 % StartTime = The time when the taxi should leave the parking lot
+% Distance = the distance till we reach the next node in the path
+% TotalDistance = the distance from previous point till the next point
 % 
-:- dynamic job/5.
+:- dynamic job/7.
 
 % 
 % Ask a new empty taxi who is not busy doing a job.
 % 
 newTaxi(TaxID) :-
 	taxi(TaxID),
-	\+job(TaxID,_,_,_,_).
+	\+job(TaxID,_,_,_,_,_,_).
 
 
 % 
 % Print job for specified taxi.
 % 
 printJob(TaxID) :-
-	job(TaxID,Cust,_,_,Time),
+	job(TaxID,Cust,_,_,Time,D,T),
 	write('Job created for Taxi '),
 	write(TaxID),
 	write(' at '),
 	write(Time),
 	write(' to deliver customer '),
-	writeln(Cust).
+	write(Cust),
+	write('. ['),
+	Temp is T-D,
+	write(Temp),
+	write('/'),
+	write(T),
+	writeln(']').
 
 % 
 % Print all current jobs.
 % 
 printAllJobs :-
-    	forall(job(TaxID,_,_,_,_),
+    	forall(job(TaxID,_,_,_,_,_,_),
            	printJob(TaxID)).
 
 % 
 % Clean up all jobs.
 % 
 deleteAllJobs :-
-	retractall(job(_,_,_,_,_)).
+	retractall(job(_,_,_,_,_,_,_)).
 
 
 

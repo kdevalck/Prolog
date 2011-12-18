@@ -34,27 +34,27 @@ createJobs(Time,[]) :-
 	writeln(Time).
 
 createJobs(1440,Rest) :-
-	writeln('Taxi company closed!'),
+	writeln('Taxi company closed! Following customers were not picked up: '),
 	write(Rest).
 
 
 % loop over list and createjobs for the taxis to pickup customers
-createJobs(Time,[PickupTime-CID-Path|Rest]) :-
+createJobs(Time,[PickupTime-CID-[F,S|RestPath]|Rest]) :-
 	
 	(Time =:= PickupTime
 		-> (	write(Time),
 			write(' : '),
 			newTaxi(TaxID),
-			write(TaxID),
 			parkingLot(PID),
-			assert(job(TaxID,[CID],Path,PID,Time)),
+			edge(F,S,Dist),
+			assert(job(TaxID,[CID],[F,S|RestPath],PID,Time,Dist,Dist)),
 			printJob(TaxID),
 			writeln(''),
 			createJobs(Time,Rest)
 		   )
 		; (	
 			New is Time + 1,
-			createJobs(New,[PickupTime-CID-Path|Rest]))).
+			createJobs(New,[PickupTime-CID-[F,S|RestPath]|Rest]))).
 
 
 
