@@ -34,13 +34,23 @@ newTaxi(TaxID) :-
 
 
 % 
+% Print job for specified taxi.
+% 
+printJob(TaxID) :-
+	job(TaxID,Cust,_,_,Time),
+	write('Job created for Taxi '),
+	write(TaxID),
+	write(' at '),
+	write(Time),
+	write(' to deliver customer '),
+	writeln(Cust).
+
+% 
 % Print all current jobs.
 % 
 printAllJobs :-
     	forall(job(TaxID,_,_,_,_),
-           	(write('Taxi '),
-            	write(TaxID),
-            	writeln(' is doing a job.'))).
+           	printJob(TaxID)).
 
 % 
 % Clean up all jobs.
