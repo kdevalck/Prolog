@@ -5,10 +5,49 @@
 % 
 
 
-% Get PointID of taxi's parking lot
+% Get PointID of taxi's parking lot.
+% The parking lot is the node in the middle
+%  of the city.
 
 parkingLot(PID) :-
 	node(PID,13,13).
+
+
+% 
+% Job for a specified taxi
+% 
+% A job wil have 5 parameters
+% Taxi = the taxi id
+% CustList = List of customers to be delivered
+% Path = Path to follow to deliver customers
+% CurrN = The current node where the taxi is situated at the moment
+% StartTime = The time when the taxi should leave the parking lot
+% 
+:- dynamic job/5.
+
+% 
+% Ask a new empty taxi who is not busy doing a job.
+% 
+newTaxi(TaxID) :-
+	taxi(TaxID),
+	\+job(TaxID,_,_,_,_).
+
+
+% 
+% Print all current jobs.
+% 
+printAllJobs :-
+    	forall(job(TaxID,_,_,_,_),
+           	(write('Taxi '),
+            	write(TaxID),
+            	writeln(' is doing a job.'))).
+
+% 
+% Clean up all jobs.
+% 
+deleteAllJobs :-
+	retractall(job(_,_,_,_,_)).
+
 
 
 % 
