@@ -27,14 +27,14 @@ divideTaxis :-
 %
 % PLID = parkinglot node id
 divideTaxis([FirstTime-FirstID|SortedCustomers],PLID,TaxID) :-
-	fast_write(FirstTime),
+	write(FirstTime),
 	write(FirstID),
 	write(PLID),
 	write(TaxID),
 	write('   '),
-	Temp is TaxID + 1,
-	
-	shortestPath(FirstID,PLID,_,L),
+	Temp is TaxID + 1,	
+	\+TaxID = 10,!,
+	shortestPath(PLID,FirstID,_,L),
 	write(L),nl,
 
 	divideTaxis(SortedCustomers,PLID,Temp).
