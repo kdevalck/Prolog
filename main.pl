@@ -29,8 +29,6 @@ main :-
 
 
 isEmpty([]).
-doCheck(X) :-
-	(isEmpty(X) -> write('empty');write('not empty')).
 
 createJobs(1440,Rest) :-
 	writeln('Taxi company closed! Following customers were not picked up: '),
@@ -85,6 +83,21 @@ taxiProceedNextNode(TaxID,Time) :-
 	assert(job(TaxID,Cust,CustInCab,[S|Rest],Time,NewTime,Status)).
 
 
+checkForPickUpNode(TaxID,Time) :-
+	job(TaxID,Cust,CInCab,[F|R],STime,NTime,Status),
+	forall(customer(ID,_,_,F,_),
+		(	member(ID, Cust),
+			append(CInCab,[ID],NewCInCab),
+			delete(Cust,ID,NewCust),
+			printCustomerPickUp(TaxID,ID,Time,F),
+			retract(job(TaxID,_,_,_,_,_,_)),
+			assert(job(TaxID,NewCust,NewCInCab,[F|R],STime,NTime,Status)),
+			printCustomersInTaxi(TaxID,NewCInCab,Time)
+		)).
+		
+		
+		
+
 
 doAllJobs(Time) :-
 	forall(job(TaxID,Cust,_,_,Time,_,_),
@@ -92,9 +105,11 @@ doAllJobs(Time) :-
 	forall(job(TaxID,_,_,[F|_],_,Time,1),
 		(	printTaxiReachedNode(TaxID,Time,F),
 			% check op pickup node
+			checkForPickUpNode(TaxID,Time),
 			% check op dropoff node
+			%
 			taxiProceedNextNode(TaxID,Time)
-		
+			% change to forall
 		)
 	       ).
 
