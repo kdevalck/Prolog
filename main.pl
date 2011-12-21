@@ -64,11 +64,30 @@ doAllJobs :-
 		    doJob(TaxID,Customers,Path,CurrN,StartTime,Dist,TDist,Status)).   	
 doJob(TaxID,Customers,Path,CurrN,StartTime,Dist,TDist,1) :-
 	writeln('Driving to customer'),
-	
 	printJobDebug(TaxID),
+	%retract(job(TaxID,_,_,_,_,_,_,_)),
+	(Dist =:= 0
+		-> (moveTaxiToNextPoint(TaxID,Path)
+
 	NewDist is Dist - 1,
 	write(NewDist).
 	
+moveTaxiToNextPoint(TaxID,[F|S]) :-
+	job(TaxID,Customers,[First|Rest],CurrN,StartTime,Dist,TDist,Status),
+	retract(job(TaxID,_,_,_,_,_,_,_)),
+	edge(CurrN,First,D),
+	assert(job(TaxID,Customers,Rest,First,StartTime,D,D,Status).
+
+moveTaxiToNextPoint(TaxID,[L]) :-
+	job(TaxID,Customers,_,CurrN,StartTime,Dist,TDist,Status),
+	retract(job(TaxID,_,_,_,_,_,_,_)),
+	write('Reached the customer'),
+	
+	
+
+
+
+
 
 doJob(TaxID,Customers,Path,CurrN,StartTime,Dist,TDist,3) :-
 	writeln('Driving back to lot').
