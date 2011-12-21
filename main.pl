@@ -22,9 +22,9 @@ main :-
 	
 	
 	
-	printAllJobs,
+	printAllJobs.
 	% at the end of the program: cleanup al jobs.
-	deleteAllJobs.
+	%deleteAllJobs.
 
 
 
@@ -47,7 +47,8 @@ createJobs(Time,[PickupTime-CID-[F,S|RestPath]|Rest]) :-
 			newTaxi(TaxID),
 			parkingLot(PID),
 			edge(F,S,Dist),
-			assert(job(TaxID,[CID],[F,S|RestPath],PID,Time,Dist,Dist)),
+			assert(job(TaxID,[CID],[S|RestPath],PID,Time,Dist,Dist,1)),
+			%write([S|RestPath]),
 			printJob(TaxID),
 			writeln(''),
 			createJobs(Time,Rest)
@@ -57,10 +58,20 @@ createJobs(Time,[PickupTime-CID-[F,S|RestPath]|Rest]) :-
 			createJobs(New,[PickupTime-CID-[F,S|RestPath]|Rest]))).
 
 
+% Simulate the moving of the taxi by doing the jobs
+doAllJobs :-
+	forall(job(TaxID,Customers,Path,CurrN,StartTime,Dist,TDist,Status),
+		    doJob(TaxID,Customers,Path,CurrN,StartTime,Dist,TDist,Status)).   	
+doJob(TaxID,Customers,Path,CurrN,StartTime,Dist,TDist,1) :-
+	writeln('Driving to customer'),
+	
+	printJobDebug(TaxID),
+	NewDist is Dist - 1,
+	write(NewDist).
+	
 
-
-
-
+doJob(TaxID,Customers,Path,CurrN,StartTime,Dist,TDist,3) :-
+	writeln('Driving back to lot').
 
 
 

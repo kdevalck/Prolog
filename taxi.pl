@@ -24,22 +24,23 @@ parkingLot(PID) :-
 % StartTime = The time when the taxi should leave the parking lot
 % Distance = the distance till we reach the next node in the path
 % TotalDistance = the distance from previous point till the next point
+% Status = the status in which the job is
 % 
-:- dynamic job/7.
+:- dynamic job/8.
 
 % 
 % Ask a new empty taxi who is not busy doing a job.
 % 
 newTaxi(TaxID) :-
 	taxi(TaxID),
-	\+job(TaxID,_,_,_,_,_,_).
+	\+job(TaxID,_,_,_,_,_,_,_).
 
 
 % 
 % Print job for specified taxi.
 % 
 printJob(TaxID) :-
-	job(TaxID,Cust,_,_,Time,D,T),
+	job(TaxID,Cust,_,_,Time,D,T,_),
 	write('Job created for Taxi '),
 	write(TaxID),
 	write(' at '),
@@ -54,17 +55,58 @@ printJob(TaxID) :-
 	writeln(']').
 
 % 
+% Print job for debugging
+% 
+printJobDebug(TaxID) :-
+	job(TaxID,Cust,P,CurrN,Time,D,T,St),
+	write(TaxID),
+	writeln('	'),
+	write(Cust),
+	writeln('	'),
+	write(P),
+	writeln('	'),
+	write(CurrN),
+	writeln('	'),
+	write(Time),
+	writeln('	'),
+	write(D),
+	writeln('	'),
+	write(T),
+	writeln('	'),
+	write(St),
+	writeln('	').
+
+% 
+% Print all current jobs for debugging.
+% 
+printAllJobsDebug :-
+    	forall(job(TaxID,_,_,_,_,_,_,_),
+           	printJobDebug(TaxID)).
+
+% 
 % Print all current jobs.
 % 
 printAllJobs :-
-    	forall(job(TaxID,_,_,_,_,_,_),
+    	forall(job(TaxID,_,_,_,_,_,_,_),
            	printJob(TaxID)).
+
+
+% 
+% Count available taxi's.
+% 
+availableTaxis(Count) :-
+	findall(_,
+		( taxi(TaxID),
+		  \+job(TaxID,_,_,_,_,_,_,_)),
+		List),
+	length(List,X),
+	Count is X.
 
 % 
 % Clean up all jobs.
 % 
 deleteAllJobs :-
-	retractall(job(_,_,_,_,_,_,_)).
+	retractall(job(_,_,_,_,_,_,_,_)).
 
 
 
