@@ -15,88 +15,88 @@ main :-
 	writeln('Start adding jobs'),
 	getDeparturesTimeToReachCustomers(DeparturesList),
 	keysort(DeparturesList,SortedDeparturesList),
-	write(SortedDeparturesList),
-	createJobs(0,SortedDeparturesList),
+	writeln(SortedDeparturesList),
+	createJobs(0,SortedDeparturesList).
 	
 	
 	
 	
 	
-	printAllJobs.
+	%printAllJobs.
 	% at the end of the program: cleanup al jobs.
 	%deleteAllJobs.
 
 
 
-
-createJobs(Time,[]) :-
-	write('All jobs divided at '),
-	writeln(Time).
+isEmpty([]).
+doCheck(X) :-
+	(isEmpty(X) -> write('empty');write('not empty')).
 
 createJobs(1440,Rest) :-
 	writeln('Taxi company closed! Following customers were not picked up: '),
 	write(Rest).
 
+createJobs(Time,[]) :-
+	%write('All jobs divided at '),
+	%writeln(Time).
+	New is Time + 1,
+	doAllJobs(Time),
+	createJobs(New,[]).
 
 % loop over list and createjobs for the taxis to pickup customers
 createJobs(Time,[PickupTime-CID-[F,S|RestPath]|Rest]) :-
 	
 	(Time =:= PickupTime
-		-> (	write(Time),
-			write(' : '),
+		-> (	%write(Time),
+			%write(' : '),
 			newTaxi(TaxID),
 			parkingLot(PID),
 			edge(F,S,Dist),
-			assert(job(TaxID,[CID],[S|RestPath],PID,Time,Dist,Dist,1)),
+			%write('------------'),	%
+			%writeln(F),		%
+			TimeDist is Time + Dist,
+			assert(job(TaxID,[CID],[],[S|RestPath],Time,TimeDist,1)),
 			%write([S|RestPath]),
-			printJob(TaxID),
-			writeln(''),
-			createJobs(Time,Rest)
+			%printJobDebug(TaxID),
+			%writeln(''),
+			%doAllJobs(Time),
+			New is Time + 1,
+			(isEmpty(Rest)
+				-> (doAllJobs(Time),createJobs(New,Rest))
+				; createJobs(Time,Rest))
+			
 		   )
 		; (	
 			New is Time + 1,
+			doAllJobs(Time),
 			createJobs(New,[PickupTime-CID-[F,S|RestPath]|Rest]))).
 
 
-% Simulate the moving of the taxi by doing the jobs
-doAllJobs :-
-	forall(job(TaxID,Customers,Path,CurrN,StartTime,Dist,TDist,Status),
-		    doJob(TaxID,Customers,Path,CurrN,StartTime,Dist,TDist,Status)).   	
-doJob(TaxID,Customers,Path,CurrN,StartTime,Dist,TDist,1) :-
-	writeln('Driving to customer'),
-	printJobDebug(TaxID),
-	%retract(job(TaxID,_,_,_,_,_,_,_)),
-	(Dist =:= 0
-		-> (moveTaxiToNextPoint(TaxID,Path)
-
-	NewDist is Dist - 1,
-	write(NewDist).
+taxiProceedNextNode(TaxID,Time) :-
+	job(TaxID,Cust,CustInCab,[F,S|Rest],_,Time,Status),
+	writeln(F),
+	writeln(S),
 	
-moveTaxiToNextPoint(TaxID,[F|S]) :-
-	job(TaxID,Customers,[First|Rest],CurrN,StartTime,Dist,TDist,Status),
-	retract(job(TaxID,_,_,_,_,_,_,_)),
-	edge(CurrN,First,D),
-	assert(job(TaxID,Customers,Rest,First,StartTime,D,D,Status).
-
-moveTaxiToNextPoint(TaxID,[L]) :-
-	job(TaxID,Customers,_,CurrN,StartTime,Dist,TDist,Status),
-	retract(job(TaxID,_,_,_,_,_,_,_)),
-	write('Reached the customer'),
-	
-	
+	edge(F,S, Dist),
+	write('Dist '),
+	writeln(Dist),
+	NewTime is Time + Dist,
+	retract(job(TaxID,_,_,_,_,_,_)),
+	assert(job(TaxID,Cust,CustInCab,[S|Rest],Time,NewTime,Status)).
 
 
 
-
-
-doJob(TaxID,Customers,Path,CurrN,StartTime,Dist,TDist,3) :-
-	writeln('Driving back to lot').
-
-
-
-
-
-
+doAllJobs(Time) :-
+	forall(job(TaxID,Cust,_,_,Time,_,_),
+		(printTaxiStarted(TaxID,Time,Cust))),
+	forall(job(TaxID,_,_,[F|_],_,Time,1),
+		(	printTaxiReachedNode(TaxID,Time,F),
+			% check op pickup node
+			% check op dropoff node
+			taxiProceedNextNode(TaxID,Time)
+		
+		)
+	       ).
 
 
 

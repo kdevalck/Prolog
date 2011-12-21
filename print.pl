@@ -18,3 +18,17 @@ taxiPickupCustomer(TaxID,CID,PickupTime) :-
 	write(') at time '),
 	write(PickupTime).
 	
+
+printTaxiStarted(TaxID,Time,Cust) :-
+	write(Time),
+	write(' : Taxi '),
+	write(TaxID),
+	write(' started at parking lot to pickup customer(s) '),
+	writeln(Cust).
+
+printTaxiReachedNode(TaxID,Time,Node) :-
+	write(Time),
+	write(' : Taxi '),
+	write(TaxID),
+	write(' reached node '),
+	writeln(Node).
