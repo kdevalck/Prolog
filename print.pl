@@ -33,7 +33,7 @@ printTaxiReachedNode(TaxID,Time,Node) :-
 	write(' reached node '),
 	writeln(Node).
 
-printCustomerPickUp(TaxID,Cust,Node,Time) :-
+printCustomerPickUp(TaxID,Cust,Node) :-
 	write('=> Taxi '),
 	write(TaxID),
 	write(' picked up customer '),
@@ -46,9 +46,15 @@ printCustomersInTaxi(TaxID,Cust,Time) :-
 	write(' : Customer(s) in taxi '),
 	write(TaxID),
 	write(' : '),
-	write(Cust).
+	writeln(Cust).
 
-
+printCustomerDropOff(TaxID,Cust,Node) :-
+	write('=> Taxi '),
+	write(TaxID),
+	write(' dropped off customer '),
+	write(Cust),
+	write(' at node '),
+	writeln(Node).
 
 
 
