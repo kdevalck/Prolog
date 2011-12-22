@@ -53,8 +53,10 @@ createJobs(Time,[PickupTime-CID-[F,S|RestPath]|Rest]) :-
 			%write('------------'),	%
 			%writeln(F),		%
 			TimeDist is Time + Dist,
-			assert(job(TaxID,[CID],[],[S|RestPath],Time,TimeDist,1)),
-			%write([S|RestPath]),
+			pathBetweenPickAndDrop(CID,[First|Path2]),
+			append([S|RestPath],Path2,PathToFollow),
+			assert(job(TaxID,[CID],[],PathToFollow,Time,TimeDist,1)),
+			write(PathToFollow),
 			printJobDebug(TaxID),
 			%writeln(''),
 			%doAllJobs(Time),
@@ -69,6 +71,10 @@ createJobs(Time,[PickupTime-CID-[F,S|RestPath]|Rest]) :-
 			doAllJobs(Time),
 			createJobs(New,[PickupTime-CID-[F,S|RestPath]|Rest]))).
 
+
+pathBetweenPickAndDrop(CID,Path) :-
+	customer(CID,_,_,From,To),
+	shortestPath(From,To,Path,_).
 
 taxiProceedNextNode(TaxID,Time,_) :-
 	job(TaxID,Cust,CustInCab,[F,S|Rest],_,Time,Status),
@@ -118,7 +124,7 @@ doAllJobs(Time) :-
 			% check op pickup node
 			checkForPickUpNode(TaxID,Time),
 			% check op dropoff node
-			%checkForDropOffNode(TaxID,Time),
+			checkForDropOffNode(TaxID,Time),
 			taxiProceedNextNode(TaxID,Time,Rest)
 			% change to forall
 		)
