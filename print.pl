@@ -56,6 +56,12 @@ printCustomerDropOff(TaxID,Cust,Node) :-
 	write(' at node '),
 	writeln(Node).
 
+printTaxiBackToParking(TaxID,Time) :-
+	write(Time),
+	write(' : Taxi '),
+	write(TaxID),
+	writeln(' is back at the parking lot').
+
 
 
 

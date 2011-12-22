@@ -1,9 +1,9 @@
 % TAXIS
 taxi(0).
 taxi(1).
-taxi(2).
-taxi(3).
-taxi(4).
+%taxi(2).
+%taxi(3).
+%taxi(4).
 %taxi(5).
 %taxi(6).
 %taxi(7).
@@ -3292,9 +3292,9 @@ edge(675, 674, 3).
 
 % CUSTOMERS
 customer(0, 988, 1063, 68, 660).
-customer(1, 845, 1302, 64, 483).
-customer(2, 1247, 1267, 587, 585).
-customer(3, 1203, 1256, 231, 589).
+%customer(1, 845, 1302, 64, 483).
+%customer(2, 1247, 1267, 587, 585).
+%customer(3, 1203, 1256, 231, 589).
 customer(4, 417, 751, 16, 479).
 %customer(5, 1136, 1271, 521, 242).
 %customer(6, 1031, 1376, 516, 271).

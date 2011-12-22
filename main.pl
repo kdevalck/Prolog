@@ -77,19 +77,17 @@ pathBetweenPickAndDrop(CID,Path) :-
 	shortestPath(From,To,Path,_).
 
 taxiProceedNextNode(TaxID,Time,_) :-
-	job(TaxID,Cust,CustInCab,[F,S|Rest],_,Time,Status),
-	%writeln(F),
-	%writeln(S),
-	
-	edge(F,S, Dist),
-	%write('Dist '),
-	%writeln(Dist),
-	NewTime is Time + Dist,
-	retract(job(TaxID,_,_,_,_,_,_)),
-	assert(job(TaxID,Cust,CustInCab,[S|Rest],Time,NewTime,Status)).
+	forall(job(TaxID,Cust,CustInCab,[F,S|Rest],_,Time,1),
+		(
+			edge(F,S, Dist),
+			NewTime is Time + Dist,
+			retract(job(TaxID,_,_,_,_,_,_)),
+			assert(job(TaxID,Cust,CustInCab,[S|Rest],Time,NewTime,Status))
+		)).
 
 taxiProceedNextNode(TaxId,Time,[]) :-
-	writeln('Do nothing anymore').
+	writeln('Do nothing anymore'),
+	printJobDebug(TaxID).
 
 checkForPickUpNode(TaxID,Time) :-
 	job(TaxID,Cust,CInCab,[F|R],STime,NTime,Status),
@@ -105,6 +103,20 @@ checkForPickUpNode(TaxID,Time) :-
 		)).
 		
 		
+checkForParkingLot(TaxID,Time) :-
+	forall( job(TaxID,Cust,CInCab,[L],_,_,1),
+		( (isEmpty(Cust),isEmpty(CInCab))
+		->
+		(writeln('Both empty! So need to return to parking lot'),
+		parkingLot(PID),
+		shortestPath(L,PID,Path,Length),
+		%write(Path),
+		NewTime is Time + Length,
+		retract(job(TaxID,_,_,_,_,_,_)),
+		assert(job(TaxID,Cust,CInCab,Path,NewTime,NewTime,2))
+		))).
+
+
 checkForDropOffNode(TaxID,Time) :-
 	job(TaxID,Cust,CInCab,[F|R],STime,NTime,Status),
 	forall((customer(ID,_,_,_,F),memberchk(ID, CInCab)),
@@ -114,23 +126,31 @@ checkForDropOffNode(TaxID,Time) :-
 			retract(job(TaxID,_,_,_,_,_,_)),
 			assert(job(TaxID,Cust,NewCInCab,[F|R],STime,NTime,Status)),
 			printCustomersInTaxi(TaxID,NewCInCab,Time)
-		)).
+		)),
+	checkForParkingLot(TaxID,Time).
+
 
 doAllJobs(Time) :-
-	forall(job(TaxID,Cust,_,_,Time,_,_),
+	forall(job(TaxID,Cust,_,_,Time,_,1),
 		(printTaxiStarted(TaxID,Time,Cust))),
 	forall(job(TaxID,_,_,[F|Rest],_,Time,1),
-		(	printTaxiReachedNode(TaxID,Time,F),
-			% check op pickup node
+		(	% print 
+			printTaxiReachedNode(TaxID,Time,F),
+			% check if node F is pickup node
 			checkForPickUpNode(TaxID,Time),
-			% check op dropoff node
+			% check if node F is dropoff node
 			checkForDropOffNode(TaxID,Time),
+			% proceed the taxi to the next node
 			taxiProceedNextNode(TaxID,Time,Rest)
 			% change to forall
-		)
-	       ).
+		)),
+	forall(job(TaxID,_,_,_,_,Time,2),
+		(	printTaxiBackToParking(TaxID,Time),
+			freeTaxi(TaxID)
+		)).
 
-
+freeTaxi(TaxID) :-
+	retract(job(TaxID,_,_,_,_,_,_)).
 
 
 
