@@ -32,7 +32,7 @@ getDeparturesTimeToReachCustomers(ResultList) :-
 		( customer(CID,ETOP,_,_,_),
 		getDistanceAndPathToCustomer(CID,Dist,Path),
 		DepartureTime is ETOP - Dist,
-		Cust = DepartureTime-CID-Path), 
+		Cust = DepartureTime-CID-Path-Dist), 
 		ResultList).
 
 % Give the first customer to be picked up.

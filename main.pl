@@ -4,7 +4,8 @@
 % city.pl has to be loaded as first!
 
 %:-['city.pl'].
-:-['city_small.pl'].
+%:-['city_small.pl'].
+:-['modified_city_small.pl'].
 :-['print.pl'].
 :-['shortestPath.pl'].
 :-['customers.pl'].
@@ -30,6 +31,63 @@ main :-
 
 isEmpty([]).
 
+
+distancesFromDropToCustomer(Point,Customer,Result) :-
+	customer(Customer,_,_,Start,_),
+	shortestPath(Point,Start,_,Length),
+	Result = [Length-Customer].
+
+distancesFromDropToCustomers(DropPoint,[Customer], Result) :-
+	distancesFromDropToCustomer(DropPoint, Customer, Result).
+
+% give all the shortestpaths from 1 droppoint to all remaining customers
+distancesFromDropToCustomers(DropPoint,[Customer|Rest], ResultCustomers) :-
+	distancesFromDropToCustomers(DropPoint, Rest, Results),
+	distancesFromDropToCustomer(DropPoint, Customer, Result),
+	append(Results, Result, ResultCustomers).
+
+checkForExtraCustomers(_,Time,Start,[],ExtraCustomers,ExtraPath,ResultCustomers) :-
+	writeln('-----------> customers empty'),
+	ResultCustomers = [],
+	ExtraCustomers = [],
+	ExtraPath = [].
+
+% Time = the time at which we dropped of last customer
+checkForExtraCustomers(_,Time,Start,Customers,ExtraCustomers,ExtraPath,ResultCustomers) :-
+	% rewrite function distancesFromDropToCustomers to handle customers format
+
+
+
+
+	writeln(3),
+	writeln(Time),
+	ResultCustomers = Customers,
+	ExtraCustomers = [],
+	ExtraPath = [].
+	
+
+createJobForTaxi(Time,CID,[F,S|RestPath],LengthToCust,RestCustomers,ResultCustomers) :-
+	writeln(1),
+	newTaxi(TaxID),
+	edge(F,S,Dist),
+	TimeDist is Time + Dist,
+	writeln(2),
+	customer(CID,ETOP,_,From,To),
+	% ask path  and length between pick up and drop from the first customer
+	pathBetweenPickAndDrop(CID,[First|Path],Length),
+	NewTime is LengthToCust + Time + Length,
+	checkForExtraCustomers(1,NewTime,To,RestCustomers,ExtraCustomers,ExtraPath,ResultCustomers),
+	writeln(4),
+	append([S|RestPath],Path,PathToFirst),
+	% Create the total path from first to last customer(if any)
+	append(PathToFirst,ExtraPath,TotalPath),
+	% append all the customers in one list
+	append([CID],ExtraCustomers,TotalCustomers),
+	% create the job for the taxi
+	assert(job(TaxID,TotalCustomers,[],TotalPath,Time,TimeDist,1)).
+
+
+
 createJobs(1440,Rest) :-
 	writeln('Taxi company closed! Following customers were not picked up: '),
 	write(Rest).
@@ -43,33 +101,32 @@ createJobs(Time,[]) :-
 
 % loop over list and createjobs for the taxis to pickup customers
 %  while looping over Time, do all the jobs.
-createJobs(Time,[PickupTime-CID-[F,S|RestPath]|Rest]) :-
+createJobs(Time,[PickupTime-CID-[F,S|RestPath]-LengthToCust|Rest]) :-
 	
 	(Time =:= PickupTime
-		-> (	newTaxi(TaxID),
-			edge(F,S,Dist),
-			TimeDist is Time + Dist,
-			pathBetweenPickAndDrop(CID,[First|Path2]),
-			append([S|RestPath],Path2,PathToFollow),
-			assert(job(TaxID,[CID],[],PathToFollow,Time,TimeDist,1)),
-			write(PathToFollow),
-			printJobDebug(TaxID),
+		-> (	writeln(0),
+			createJobForTaxi(Time,CID,[F,S|RestPath],LengthToCust,Rest,NewCustomers),
+			writeln(5),
+			writeln(NewCustomers),
+			%write(PathToFollow),
+			%printJobDebug(TaxID),
 			New is Time + 1,
 			% if Rest is empty, all the customers will be picked up
-			(isEmpty(Rest)
-				-> (doAllJobs(Time),createJobs(New,Rest))
-				; createJobs(Time,Rest))
+			(isEmpty(NewCustomers)
+				-> (doAllJobs(Time),createJobs(New,NewCustomers))
+				; createJobs(Time,NewCustomers))
 			
 		   )
 		; (	
 			New is Time + 1,
 			doAllJobs(Time),
-			createJobs(New,[PickupTime-CID-[F,S|RestPath]|Rest]))).
+			createJobs(New,[PickupTime-CID-[F,S|RestPath]-LengthToCust|Rest]))).
 
-
-pathBetweenPickAndDrop(CID,Path) :-
+% The shortest path between the pickup and dropoff
+% Return path and Length of shortestpath
+pathBetweenPickAndDrop(CID,Path,Length) :-
 	customer(CID,_,_,From,To),
-	shortestPath(From,To,Path,_).
+	shortestPath(From,To,Path,Length).
 
 taxiProceedNextNode(TaxID,Time,_) :-
 	forall(job(TaxID,Cust,CustInCab,[F,S|Rest],_,Time,1),
