@@ -42,25 +42,20 @@ createJobs(Time,[]) :-
 	createJobs(New,[]).
 
 % loop over list and createjobs for the taxis to pickup customers
+%  while looping over Time, do all the jobs.
 createJobs(Time,[PickupTime-CID-[F,S|RestPath]|Rest]) :-
 	
 	(Time =:= PickupTime
-		-> (	%write(Time),
-			%write(' : '),
-			newTaxi(TaxID),
-			%parkingLot(PID),
+		-> (	newTaxi(TaxID),
 			edge(F,S,Dist),
-			%write('------------'),	%
-			%writeln(F),		%
 			TimeDist is Time + Dist,
 			pathBetweenPickAndDrop(CID,[First|Path2]),
 			append([S|RestPath],Path2,PathToFollow),
 			assert(job(TaxID,[CID],[],PathToFollow,Time,TimeDist,1)),
 			write(PathToFollow),
 			printJobDebug(TaxID),
-			%writeln(''),
-			%doAllJobs(Time),
 			New is Time + 1,
+			% if Rest is empty, all the customers will be picked up
 			(isEmpty(Rest)
 				-> (doAllJobs(Time),createJobs(New,Rest))
 				; createJobs(Time,Rest))
@@ -85,9 +80,7 @@ taxiProceedNextNode(TaxID,Time,_) :-
 			assert(job(TaxID,Cust,CustInCab,[S|Rest],Time,NewTime,Status))
 		)).
 
-taxiProceedNextNode(TaxId,Time,[]) :-
-	writeln('Do nothing anymore'),
-	printJobDebug(TaxID).
+taxiProceedNextNode(TaxId,Time,[]).
 
 checkForPickUpNode(TaxID,Time) :-
 	job(TaxID,Cust,CInCab,[F|R],STime,NTime,Status),
