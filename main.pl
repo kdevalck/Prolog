@@ -31,41 +31,90 @@ main :-
 
 isEmpty([]).
 
-
+% ---------------------------------------------------------------------------------
+% Calculates all the shortestpaths from a particular point to all teh customers
+%  their pickup node.
 distancesFromDropToCustomer(Point,Customer,Result) :-
 	customer(Customer,_,_,Start,_),
 	shortestPath(Point,Start,_,Length),
 	Result = [Length-Customer].
 
-distancesFromDropToCustomers(DropPoint,[Customer], Result) :-
+distancesFromDropToCustomers(DropPoint,[_-Customer-_-_], Result) :-
 	distancesFromDropToCustomer(DropPoint, Customer, Result).
 
 % give all the shortestpaths from 1 droppoint to all remaining customers
-distancesFromDropToCustomers(DropPoint,[Customer|Rest], ResultCustomers) :-
+distancesFromDropToCustomers(DropPoint,[_-Customer-_-_|Rest], ResultCustomers) :-
 	distancesFromDropToCustomers(DropPoint, Rest, Results),
 	distancesFromDropToCustomer(DropPoint, Customer, Result),
 	append(Results, Result, ResultCustomers).
 
+
+% ---------------------------------------------------------------------------------
+% InnerCheckTimeConstrains does the actual check
+%  If the time we reach that pickup point is within
+%  ETOP and LTOP then we add CID to result.
+innerCheckTimeConstraints(Time,[Length-CID],Result) :-
+	customer(CID,ETOP,LTOP,_,_),
+	((ETOP=<Time+Length,Time+Length=<LTOP)
+		-> Result = [CID-Length]
+		;  Result = []).
+
+% Last call of checkTimeConstraints
+checkTimeConstraints(Time,[Length-CID],ReturnCID) :-
+	innerCheckTimeConstraints(Time,[Length-CID],ReturnCID).
+
+% check what time it is till we reach the closest customer. And check
+%  if this time is within the time the customers wants to be picked up.	
+checkTimeConstraints(Time,[Length-CID|Customers],ReturnCIDs) :-
+	checkTimeConstraints(Time,Customers,InnerCIDs),
+	innerCheckTimeConstraints(Time,[Length-CID],InnerCID),
+	append(InnerCID,InnerCIDs,ReturnCIDs).
+% ---------------------------------------------------------------------------------
+
+
+% check will be ommitted if no customers remaining
 checkForExtraCustomers(_,Time,Start,[],ExtraCustomers,ExtraPath,ResultCustomers) :-
 	writeln('-----------> customers empty'),
 	ResultCustomers = [],
 	ExtraCustomers = [],
 	ExtraPath = [].
 
-% Time = the time at which we dropped of last customer
+% Time = the time at which we dropped of the last customer
 checkForExtraCustomers(_,Time,Start,Customers,ExtraCustomers,ExtraPath,ResultCustomers) :-
-	% rewrite function distancesFromDropToCustomers to handle customers format
-
-
-
-
+	% 
+	distancesFromDropToCustomers(Start,Customers,Distances),
+	writeln(Distances),
+	keysort(Distances,SortedDistances),
+	writeln(SortedDistances),
+	checkTimeConstraints(Time,SortedDistances,CheckedDistances),
+	writeln(CheckedDistances),
 	writeln(3),
 	writeln(Time),
-	ResultCustomers = Customers,
-	ExtraCustomers = [],
-	ExtraPath = [].
-	
+	% If no customer is found fullfilling the constraints,
+	%  we return the original customers
+	(isEmpty(CheckedDistances)
+		-> (	ResultCustomers = Customers,
+			ExtraCustomers = [],
+			ExtraPath = [])
+		% when we found the closest customer we can pickup next
+		;  (	giveFirstCustomer(CheckedDistances,CID-_),
+			removeCustFromCustomersList(CID,Customers, ResultCustomers),
+			ExtraCustomers = [CID],
+			customer(CID,_,_,From,To),
+			shortestPath(Start,From,[_|Path1],Len1),
+			shortestPath(From,To,[_|Path2],Len2),
+			append(Path1,Path2,ExtraPath))).
 
+giveFirstCustomer([Cust|Rest],Cust).
+giveFirstCustomer([Cust],Cust).
+% ---------------------------------------------------------------------------------	
+% Customers are in the format: PickupTime-CID-Path-Length
+% This function will remove specified customer with CID from
+%  the customerslist.
+removeCustFromCustomersList(CID,Customers,NewCustomers) :-
+	select(_-CID-_-_,Customers,NewCustomers).
+
+% ---------------------------------------------------------------------------------
 createJobForTaxi(Time,CID,[F,S|RestPath],LengthToCust,RestCustomers,ResultCustomers) :-
 	writeln(1),
 	newTaxi(TaxID),
