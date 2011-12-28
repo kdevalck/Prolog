@@ -12,6 +12,24 @@
 :-['taxi.pl'].
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%	TODO:		%
+%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%checkForPickUpNode : extra check for the correct time.
+
+
+
+
+
+
+
+
+
+
+
+
+
 main :-
 	writeln('Start adding jobs'),
 	getDeparturesTimeToReachCustomers(DeparturesList),
@@ -73,7 +91,7 @@ checkTimeConstraints(Time,[Length-CID|Customers],ReturnCIDs) :-
 
 
 % check will be ommitted if no customers remaining
-checkForExtraCustomers(_,Time,Start,[],ExtraCustomers,ExtraPath,ResultCustomers) :-
+checkForExtraCustomers(_,_,_,[],ExtraCustomers,ExtraPath,ResultCustomers) :-
 	writeln('-----------> customers empty'),
 	ResultCustomers = [],
 	ExtraCustomers = [],
@@ -105,7 +123,7 @@ checkForExtraCustomers(_,Time,Start,Customers,ExtraCustomers,ExtraPath,ResultCus
 			shortestPath(From,To,[_|Path2],Len2),
 			append(Path1,Path2,ExtraPath))).
 
-giveFirstCustomer([Cust|Rest],Cust).
+giveFirstCustomer([Cust|_],Cust).
 giveFirstCustomer([Cust],Cust).
 % ---------------------------------------------------------------------------------	
 % Customers are in the format: PickupTime-CID-Path-Length
@@ -183,7 +201,7 @@ taxiProceedNextNode(TaxID,Time,_) :-
 			edge(F,S, Dist),
 			NewTime is Time + Dist,
 			retract(job(TaxID,_,_,_,_,_,_)),
-			assert(job(TaxID,Cust,CustInCab,[S|Rest],Time,NewTime,Status))
+			assert(job(TaxID,Cust,CustInCab,[S|Rest],Time,NewTime,1))
 		)).
 
 taxiProceedNextNode(TaxId,Time,[]).
