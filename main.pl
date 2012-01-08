@@ -34,7 +34,7 @@ main :-
 	writeln('Start adding jobs'),
 	getDeparturesTimeToReachCustomers(DeparturesList),
 	keysort(DeparturesList,SortedDeparturesList),
-	writeln(SortedDeparturesList),
+	%writeln(SortedDeparturesList),
 	createJobs(0,SortedDeparturesList).
 	
 	
@@ -50,7 +50,7 @@ main :-
 isEmpty([]).
 
 % ---------------------------------------------------------------------------------
-% Calculates all the shortestpaths from a particular point to all teh customers
+% Calculates all the shortestpaths from a particular point to all the customers
 %  their pickup node.
 distancesFromDropToCustomer(Point,Customer,Result) :-
 	customer(Customer,_,_,Start,_),
@@ -98,14 +98,16 @@ checkForExtraCustomers(_,_,_,[],ExtraCustomers,ExtraPath,ResultCustomers) :-
 	ExtraPath = [].
 
 % Time = the time at which we dropped of the last customer
+% Start = the point where we dropped of last customer
+% Customers = list of available customers
 checkForExtraCustomers(_,Time,Start,Customers,ExtraCustomers,ExtraPath,ResultCustomers) :-
 	% 
 	distancesFromDropToCustomers(Start,Customers,Distances),
-	writeln(Distances),
+	%writeln(Distances),
 	keysort(Distances,SortedDistances),
-	writeln(SortedDistances),
+	%writeln(SortedDistances),
 	checkTimeConstraints(Time,SortedDistances,CheckedDistances),
-	writeln(CheckedDistances),
+	%writeln(CheckedDistances),
 	writeln(3),
 	writeln(Time),
 	% If no customer is found fullfilling the constraints,
@@ -135,6 +137,7 @@ removeCustFromCustomersList(CID,Customers,NewCustomers) :-
 % ---------------------------------------------------------------------------------
 createJobForTaxi(Time,CID,[F,S|RestPath],LengthToCust,RestCustomers,ResultCustomers) :-
 	writeln(1),
+	% take new available taxi
 	newTaxi(TaxID),
 	edge(F,S,Dist),
 	TimeDist is Time + Dist,
@@ -174,7 +177,7 @@ createJobs(Time,[PickupTime-CID-[F,S|RestPath]-LengthToCust|Rest]) :-
 		-> (	writeln(0),
 			createJobForTaxi(Time,CID,[F,S|RestPath],LengthToCust,Rest,NewCustomers),
 			writeln(5),
-			writeln(NewCustomers),
+			%writeln(NewCustomers),
 			%write(PathToFollow),
 			%printJobDebug(TaxID),
 			New is Time + 1,
@@ -208,8 +211,7 @@ taxiProceedNextNode(TaxId,Time,[]).
 
 checkForPickUpNode(TaxID,Time) :-
 	job(TaxID,Cust,CInCab,[F|R],STime,NTime,Status),
-	forall((customer(ID,_,_,F,_),memberchk(ID, Cust)),
-			%%%% make if test around member test
+	forall((customer(ID,ETOP,LTOP,F,_),memberchk(ID, Cust),ETOP=<Time,Time=<LTOP),
 		(	
 			append(CInCab,[ID],NewCInCab),
 			delete(Cust,ID,NewCust),
