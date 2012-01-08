@@ -52,6 +52,7 @@ isEmpty([]).
 % ---------------------------------------------------------------------------------
 % Calculates all the shortestpaths from a particular point to all the customers
 %  their pickup node.
+% Result format : Length - Customer
 distancesFromDropToCustomer(Point,Customer,Result) :-
 	customer(Customer,_,_,Start,_),
 	shortestPath(Point,Start,_,Length),
@@ -71,6 +72,8 @@ distancesFromDropToCustomers(DropPoint,[_-Customer-_-_|Rest], ResultCustomers) :
 % InnerCheckTimeConstrains does the actual check
 %  If the time we reach that pickup point is within
 %  ETOP and LTOP then we add CID to result.
+%
+% Output format: CID - Length
 innerCheckTimeConstraints(Time,[Length-CID],Result) :-
 	customer(CID,ETOP,LTOP,_,_),
 	((ETOP=<Time+Length,Time+Length=<LTOP)
@@ -91,7 +94,7 @@ checkTimeConstraints(Time,[Length-CID|Customers],ReturnCIDs) :-
 
 
 % check will be ommitted if no customers remaining
-checkForExtraCustomers(_,_,_,[],ExtraCustomers,ExtraPath,ResultCustomers) :-
+checkForExtraCustomer(_,_,[],ExtraCustomers,ExtraPath,ResultCustomers) :-
 	writeln('-----------> customers empty'),
 	ResultCustomers = [],
 	ExtraCustomers = [],
@@ -100,7 +103,7 @@ checkForExtraCustomers(_,_,_,[],ExtraCustomers,ExtraPath,ResultCustomers) :-
 % Time = the time at which we dropped of the last customer
 % Start = the point where we dropped of last customer
 % Customers = list of available customers
-checkForExtraCustomers(_,Time,Start,Customers,ExtraCustomers,ExtraPath,ResultCustomers) :-
+checkForExtraCustomer(Time,Start,Customers,ExtraCustomers,ExtraPath,ResultCustomers) :-
 	% 
 	distancesFromDropToCustomers(Start,Customers,Distances),
 	%writeln(Distances),
@@ -112,18 +115,68 @@ checkForExtraCustomers(_,Time,Start,Customers,ExtraCustomers,ExtraPath,ResultCus
 	writeln(Time),
 	% If no customer is found fullfilling the constraints,
 	%  we return the original customers
+	write('checked distance'),
+	writeln(CheckedDistances),
 	(isEmpty(CheckedDistances)
 		-> (	ResultCustomers = Customers,
 			ExtraCustomers = [],
 			ExtraPath = [])
 		% when we found the closest customer we can pickup next
 		;  (	giveFirstCustomer(CheckedDistances,CID-_),
+			writeln('herea'),
+			writeln(CID),
+			writeln(Customers),
+			writeln(ResultCustomers),
 			removeCustFromCustomersList(CID,Customers, ResultCustomers),
+			writeln('hereb'),
 			ExtraCustomers = [CID],
+			writeln('herec'),
 			customer(CID,_,_,From,To),
+			writeln('hered'),	
 			shortestPath(Start,From,[_|Path1],Len1),
+			writeln('heref'),
 			shortestPath(From,To,[_|Path2],Len2),
 			append(Path1,Path2,ExtraPath))).
+
+
+checkForExtraCustomersInner(0, _, _, Customers, CurrCust, CurrPath, ExtraCustomersCab, ExtraPathCab, ResultCustomers) :-
+	ExtraCustomersCab = CurrCust,
+	ExtraPathCab = CurrPath,
+	ResultCustomers = Customers.
+	
+checkForExtraCustomersInner(Number, Time, Start, Customers, CurrCust, CurrPath, ExtraCustomersCab, ExtraPathCab, ResultCustomers) :-
+	checkForExtraCustomer(Time,Start,Customers,ExtraCustomers,ExtraPath,ResultCustomerss),
+	(isEmpty(ExtraPath)
+	% if ExtraPath is empty, we can be shure that the taxi cannot pickup anymore customers
+		-> (% we stop here, and return the result through:ExtraCustomersCab,ExtraPathCab,ResultCustomers
+			writeln('here'),
+			writeln(CurrCust),
+			writeln(CurrPath),
+			checkForExtraCustomersInner(0, Time, Start, Customers, CurrCust, CurrPath, ExtraCustomersCab, ExtraPathCab, ResultCustomers)
+			)
+		; (% number is not 0, so more customers can be picked up in cab, so we reloop.
+			writeln('here1'),
+			NewNumber is Number - 1,
+			writeln('here2'),
+			last(ExtraPath,NewStart),
+			writeln('here3'),
+			append(CurrCust,ExtraCustomers, NewCustomers),
+			writeln('here4'),
+			append(CurrPath,ExtraPath, NewPath),
+			checkForExtraCustomersInner(NewNumber, Time, NewStart, ResultCustomerss, NewCustomers, NewPath, ExtraCustomersCab, ExtraPathCab, ResultCustomers)
+			)).
+	
+	
+
+
+
+
+
+%checkForExtraCustomers(Number, Time, Start, Customers,ExtraCustomers,ExtraPath,ResultCustomers):-
+%	chechForExtraCustomersInner
+
+
+
 
 giveFirstCustomer([Cust|_],Cust).
 giveFirstCustomer([Cust],Cust).
@@ -146,7 +199,11 @@ createJobForTaxi(Time,CID,[F,S|RestPath],LengthToCust,RestCustomers,ResultCustom
 	% ask path  and length between pick up and drop from the first customer
 	pathBetweenPickAndDrop(CID,[First|Path],Length),
 	NewTime is LengthToCust + Time + Length,
-	checkForExtraCustomers(1,NewTime,To,RestCustomers,ExtraCustomers,ExtraPath,ResultCustomers),
+	%checkForExtraCustomer(NewTime,To,RestCustomers,ExtraCustomers,ExtraPath,ResultCustomers),
+	checkForExtraCustomersInner(2, NewTime, To, RestCustomers, [], [], ExtraCustomers, ExtraPath, ResultCustomers), 
+	writeln(ExtraCustomers),
+	writeln(ExtraPath),
+	writeln(ResultCustomers),
 	writeln(4),
 	append([S|RestPath],Path,PathToFirst),
 	% Create the total path from first to last customer(if any)
@@ -160,7 +217,8 @@ createJobForTaxi(Time,CID,[F,S|RestPath],LengthToCust,RestCustomers,ResultCustom
 
 createJobs(1440,Rest) :-
 	writeln('Taxi company closed! Following customers were not picked up: '),
-	write(Rest).
+	writeln(Rest),
+	printAllJobsDebug.
 
 createJobs(Time,[]) :-
 	%write('All jobs divided at '),
